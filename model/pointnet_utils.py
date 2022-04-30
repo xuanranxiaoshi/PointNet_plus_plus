@@ -109,6 +109,7 @@ class STNkd(nn.Module):
 
 
 class PointNetEncoder(nn.Module):
+    """返回通过 poinNet 提取的全局特征或者拼接了局部特征的全局特征"""
     def __init__(self, global_feat=True, feature_transform=False, channel=3):
         super(PointNetEncoder, self).__init__()
         self.stn = STN3d(channel)
@@ -126,7 +127,7 @@ class PointNetEncoder(nn.Module):
     def forward(self, x):
         """在输入一维卷积前要交换最后两个维度，因为是在最后一个维度进行卷积操作"""
         B, D, N = x.size()
-        trans = self.stn(x)  # 输入对齐
+        trans = self.stn(x)  # 输入对齐 B*3*3
         x = x.transpose(2, 1)  # B*N*D
         if D > 3:
             feature = x[:, :, 3:]  # 特征
@@ -134,6 +135,8 @@ class PointNetEncoder(nn.Module):
         x = torch.bmm(x, trans)  # 矩阵乘法，相当于对齐的操作 B*N*3
         if D > 3:
             x = torch.cat([x, feature], dim=2)  # 坐标对齐之后拼接上原来的特征
+
+        """MLP 实现为卷积 """
         x = x.transpose(2, 1)  # B*D*N   先交换最后两个维度再进行一维卷积
         x = F.relu(self.bn1(self.conv1(x)))  # 一维卷积操作 B*64*N
 
@@ -146,7 +149,7 @@ class PointNetEncoder(nn.Module):
             trans_feat = None
 
         pointfeat = x   # 局部特征 B*64*N
-        """全连接层"""
+        """MLP"""
         x = F.relu(self.bn2(self.conv2(x)))  # B*128*N
         x = self.bn3(self.conv3(x))  # B*1024*N
         x = torch.max(x, 2, keepdim=True)[0]    # B*1024*1  最大池化
