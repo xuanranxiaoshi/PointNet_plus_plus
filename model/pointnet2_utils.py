@@ -193,7 +193,7 @@ class PointNetSetAbstraction(nn.Module):
         self.mlp_bns = nn.ModuleList()  # 批归一化层
         last_channel = in_channel  # 上一层输入通道大小
         for out_channel in mlp:
-            """这里卷积核的大小是1？"""
+            """这里卷积核的大小是1"""
             self.mlp_convs.append(nn.Conv2d(last_channel, out_channel, 1))
             self.mlp_bns.append(nn.BatchNorm2d(out_channel))
             last_channel = out_channel
@@ -213,7 +213,7 @@ class PointNetSetAbstraction(nn.Module):
             points = points.permute(0, 2, 1)  # B*N*D
         """采样"""
         if self.group_all:  # 是否将点云中的所有点作为一个领域
-            new_xyz, new_points = sample_and_group_all(xyz, points)
+            new_xyz, new_points = sample_and_group_all(xyz, points)  # (B, 1, C) (B, 1, N, D+C)
         else:
             new_xyz, new_points = sample_and_group(self.npoint, self.radius, self.nsample, xyz, points)
 
@@ -241,7 +241,7 @@ class PointNetSetAbstractionMsg(nn.Module):
         :param radius_list: 这里的邻域半径是一个列表
         :param nsample_list: 同样采样点数也是一个与半径对应的列表
         :param in_channel: 输入特征维度
-        :param mlp_list: 多层感知机每一层的维度
+        :param mlp_list:  每个感知机每一层的维度
         """
         super(PointNetSetAbstractionMsg, self).__init__()
         self.npoint = npoint
